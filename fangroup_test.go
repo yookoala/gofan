@@ -89,3 +89,95 @@ func TestPoolUnlock(t *testing.T) {
 	}
 
 }
+
+// generate a stream of integer for testing
+func generate(a int) (out chan int) {
+	out = make(chan int)
+
+	go func() {
+		defer close(out)
+		for i := 1; i <= a; i++ {
+			out <- i
+		}
+	}()
+
+	return
+}
+
+// a simple function to check test result
+func addTo(n int) int {
+	if n == 0 {
+		return 0
+	}
+	return n + addTo(n-1)
+}
+
+// a simple fan out / fan in funciton for test
+func pipe(b int, in chan int) (out chan int) {
+	out = make(chan int)
+	fg := NewGroup(b)
+
+	for i := range in {
+
+		// clone variable for fan out
+		j := i
+
+		// store the function and run until ready
+		fg.Run(func() error {
+			out <- j // just pass the number out
+			return nil
+		})
+	}
+
+	// start a goroutine to wait
+	fg.OnFinish(func() error {
+		close(out)
+		return nil
+	})
+
+	return
+}
+
+// test the fan out / fan in pattern against
+// given pipe scale and input scale
+func testPipe(t *testing.T, pscale, tscale int) {
+
+	s := 0
+	c := 0
+	for n := range pipe(pscale, generate(tscale)) {
+		c++
+		s += n
+	}
+
+	// check count of numbers
+	if c != tscale {
+		t.Errorf("Error: `generate()` is expected to yield "+
+			"%d numbers. Get %d", tscale, c)
+	} else {
+		t.Logf("`generate()` has yield %d numbers", tscale)
+	}
+
+	// test sum of numbers
+	es := addTo(tscale) // expected sum
+	if s != es {
+		t.Errorf("Error: Sum of generated numbers "+
+			"is expected to be %d. Get %d", es, s)
+	} else {
+		t.Logf("Sum of generated numbers is %d", es)
+	}
+
+}
+
+// test the generated series
+func TestPipe(t *testing.T) {
+
+	// test when pipe scale > input scale
+	testPipe(t, 20, 5)
+
+	// test when pipe scale == input scale
+	testPipe(t, 10, 10)
+
+	// test when pipe scale < input scale
+	testPipe(t, 5, 20)
+
+}

@@ -38,6 +38,8 @@ func (fg *FanGroup) ch() (ch chan bool) {
 			"Cannot be %d", fg.size))
 	}
 	ch = make(chan bool, fg.size)
+
+	// initialize wait group
 	fg.wg = &sync.WaitGroup{}
 
 	fgm[fg] = ch
@@ -45,13 +47,45 @@ func (fg *FanGroup) ch() (ch chan bool) {
 }
 
 func (fg *FanGroup) Lock() {
+	// increment wait group
+	fg.wg.Add(1)
+
 	// pass or lock
 	fg.ch() <- true
-	fg.wg.Add(1)
 }
 
 func (fg *FanGroup) Unlock() {
-	// remove lock once
-	<-fg.ch()
-	fg.wg.Done()
+	go func() {
+		// remove lock once
+		<-fg.ch()
+
+		// when lock removed, signal done
+		fg.wg.Done()
+	}()
+}
+
+func (fg *FanGroup) Run(j job) {
+	go func() {
+		fg.Lock()
+		defer fg.Unlock()
+		if err := j(); err != nil {
+			panic(err)
+		}
+	}()
+}
+
+// Wait. Works like sync.WaitGroup.Wait()
+// Wait until all members in the group finish
+func (fg *FanGroup) Wait() {
+	fg.wg.Wait()
+}
+
+// wait until finish to do something
+func (fg *FanGroup) OnFinish(j job) {
+	go func() {
+		fg.Wait()
+		if err := j(); err != nil {
+			panic(err)
+		}
+	}()
 }

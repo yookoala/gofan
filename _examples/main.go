@@ -6,5 +6,4 @@ import (
 
 func main() {
 	gofan.NewGroup(5)
-
 }
