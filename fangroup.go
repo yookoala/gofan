@@ -2,6 +2,7 @@ package gofan
 
 import (
 	"fmt"
+	"sync"
 )
 
 var fgm map[*FanGroup]chan bool
@@ -20,6 +21,7 @@ func NewGroup(size int) (fg *FanGroup) {
 
 type FanGroup struct {
 	size int
+	wg   *sync.WaitGroup
 }
 
 func (fg *FanGroup) ch() (ch chan bool) {
@@ -36,6 +38,7 @@ func (fg *FanGroup) ch() (ch chan bool) {
 			"Cannot be %d", fg.size))
 	}
 	ch = make(chan bool, fg.size)
+	fg.wg = &sync.WaitGroup{}
 
 	fgm[fg] = ch
 	return
@@ -44,9 +47,11 @@ func (fg *FanGroup) ch() (ch chan bool) {
 func (fg *FanGroup) Lock() {
 	// pass or lock
 	fg.ch() <- true
+	fg.wg.Add(1)
 }
 
 func (fg *FanGroup) Unlock() {
 	// remove lock once
 	<-fg.ch()
+	fg.wg.Done()
 }
