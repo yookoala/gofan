@@ -68,9 +68,7 @@ func (fg *FanGroup) Run(j job) {
 	go func() {
 		fg.Lock()
 		defer fg.Unlock()
-		if err := j(); err != nil {
-			panic(err)
-		}
+		j()
 	}()
 }
 
@@ -84,8 +82,6 @@ func (fg *FanGroup) Wait() {
 func (fg *FanGroup) OnFinish(j job) {
 	go func() {
 		fg.Wait()
-		if err := j(); err != nil {
-			panic(err)
-		}
+		j()
 	}()
 }

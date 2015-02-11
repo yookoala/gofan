@@ -30,19 +30,17 @@ func pipe(b int, in chan int) (out chan int) {
 		j := i
 
 		// store the function and run until ready
-		fg.Run(func() error {
+		fg.Run(func() {
 			// returns only the even numbers
 			if j%2 == 0 {
 				out <- j
 			}
-			return nil
 		})
 	}
 
 	// start a goroutine to wait
-	fg.OnFinish(func() error {
+	fg.OnFinish(func() {
 		close(out)
-		return nil
 	})
 
 	return

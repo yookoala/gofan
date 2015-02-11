@@ -123,16 +123,14 @@ func pipe(b int, in chan int) (out chan int) {
 		j := i
 
 		// store the function and run until ready
-		fg.Run(func() error {
+		fg.Run(func() {
 			out <- j // just pass the number out
-			return nil
 		})
 	}
 
 	// start a goroutine to wait
-	fg.OnFinish(func() error {
+	fg.OnFinish(func() {
 		close(out)
-		return nil
 	})
 
 	return

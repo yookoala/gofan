@@ -1,3 +1,3 @@
 package gofan
 
-type job func() error
+type job func()
