@@ -1,4 +1,4 @@
-package poollock
+package gofan
 
 import (
 	"sync"
@@ -6,45 +6,46 @@ import (
 	"time"
 )
 
-// Test if PoolLock implements sync.Locker
-func TestPoolLockSync(t *testing.T) {
-	var l sync.Locker = New(0)
+// Test if FanGroup implements sync.Locker
+func TestFanGroupSync(t *testing.T) {
+	var l sync.Locker = NewGroup(0)
 	_ = l
-	t.Log("PoolLock implements sync.Locker")
+	t.Log("FanGroup implements sync.Locker")
 }
 
 // Test error for size < 0
-func TestPoolLockErr(t *testing.T) {
+func TestFanGroupErr(t *testing.T) {
 
 	// try to recover from panic
 	defer func() {
 		if r := recover(); r != nil {
-			t.Log("PoolLock size < 0 triggers error")
+			t.Log("FanGroup size < 0 triggers error")
 		}
 	}()
-	New(-1)
+	NewGroup(-1)
 
 	// should not have run till here
-	t.Errorf("PoolLock size < 0 doesn't trigger error")
+	t.Errorf("FanGroup size < 0 doesn't trigger error")
 }
 
 // Test of the lock can block
-func TestPoolLock(t *testing.T) {
+// Also waits until explicitly
+func TestFanGroup(t *testing.T) {
 
 	size := 4
 
-	l := New(size)
+	fg := NewGroup(size)
 
 	// lock number = the pool size
 	for i := 0; i < size; i++ {
-		l.Lock()
+		fg.Lock()
 	}
 
 	// try acquire new lock until timeout
 	// should all be blocked
 	notBlocked := make(chan bool)
 	go func() {
-		l.Lock()
+		fg.Lock()
 		notBlocked <- true
 	}()
 
@@ -62,21 +63,21 @@ func TestPoolUnlock(t *testing.T) {
 
 	size := 4
 
-	l := New(size)
+	fg := NewGroup(size)
 
 	// lock number = the pool size
 	for i := 0; i < size; i++ {
-		l.Lock()
+		fg.Lock()
 	}
 
 	// unlock once
-	l.Unlock()
+	fg.Unlock()
 
 	// try acquire new lock until timeout
 	// should not be blocked
 	notBlocked := make(chan bool)
 	go func() {
-		l.Lock()
+		fg.Lock()
 		notBlocked <- true
 	}()
 

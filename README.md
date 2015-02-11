@@ -1,8 +1,4 @@
-PoolLock
-========
+GoFan
+=====
 
-A simple library for pool controls.
-
-Provides sync.Locker implementation that blocks until reaching a certain lock limit.
-
-A variation to sync.Mutex.
+A simple library for fan out / fan in controls.
