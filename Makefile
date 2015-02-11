@@ -19,7 +19,7 @@ test: test.unit test.example
 test.example: gofan _examples/run-all
 	@echo "Run Examples"
 	@echo "------------"
-	_examples/run-all
+	@_examples/run-all
 	@echo
 
 test.unit: gofan
