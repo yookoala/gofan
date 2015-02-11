@@ -13,6 +13,21 @@ func TestPoolLockSync(t *testing.T) {
 	t.Log("PoolLock implements sync.Locker")
 }
 
+// Test error for size < 0
+func TestPoolLockErr(t *testing.T) {
+
+	// try to recover from panic
+	defer func() {
+		if r := recover(); r != nil {
+			t.Log("PoolLock size < 0 triggers error")
+		}
+	}()
+	New(-1)
+
+	// should not have run till here
+	t.Errorf("PoolLock size < 0 doesn't trigger error")
+}
+
 // Test of the lock can block
 func TestPoolLock(t *testing.T) {
 
